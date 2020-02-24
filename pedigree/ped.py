@@ -154,7 +154,7 @@ def main():
         html = get_html(v[0])
         if html is not None:
             obj = get_element(html)
-        if obj.dad_id is not None:
+        if obj is not None and obj.dad_id is not None:
             update_db(v[0], obj)
 
         print(f"\r{i}/{all} {v[0]}", end="")
