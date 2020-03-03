@@ -4,8 +4,8 @@ import re
 import csv
 import time
 
-path = r"C:\Users\user\Documents\keiba_data_file\race_file"
-# path = "./data_test"
+# path = r"C:\Users\user\Documents\keiba_data_file\race_file"
+path = "./data_test"
 head_csv = "./tanfuku_head.csv"
 body_csv = "./tanfuku_body.csv"
 
@@ -86,6 +86,9 @@ def calcSpeed(distance, race_time):
 
 def getAll(html, race_id):
     # race_date_compile
+    race_date = None
+    race_course = None
+    event_date = None
     try:
         result = race_date_compile.findall(html)
         race_date, race_course, event_date = result[0]
@@ -93,6 +96,10 @@ def getAll(html, race_id):
         print("\n race_date_compile", race_id, e)
 
     # race_state_compile
+    race_type = None
+    race_distance = None
+    race_weather = None
+    race_state = None
     try:
         result = race_state_compile.findall(html)
         race_type, race_distance, race_weather, race_state = result[0]
@@ -100,6 +107,7 @@ def getAll(html, race_id):
         print("\n race_state_compile", race_id, e)
 
     # race_number_compile
+    race_number = None
     try:
         result = race_number_compile.findall(html)
         race_number = result[0]
@@ -107,6 +115,7 @@ def getAll(html, race_id):
         print("\n race_number_compile", race_id, e)
 
     # race_name_compile
+    race_name = None
     try:
         result = race_name_compile.findall(html)
         race_name = result[0]
@@ -114,20 +123,24 @@ def getAll(html, race_id):
         print("\n race_name_compile", race_id, e)
 
     # tan_compile
+    tan = None
     try:
         result = tan_compile.findall(html)
-        uren = result[0].replace("\n", "").replace(",", "")
+        tan = result[0].replace("\n", "").replace(",", "")
     except Exception as e:
         print("\n tan_compile", race_id, e)
 
     # fuku_compile
+    fuku = None
     try:
         result = fuku_compile.findall(html)
-        sanfuku = result[0].replace("\n", "").replace(",", "")
+        fuku = result[0].replace("\n", "").replace(",", "")
     except Exception as e:
         print("\n fuku_compile", race_id, e)
 
     # table tr 取得
+    table_result = None
+    tr_result = None
     try:
         table_result = table_compile.findall(html)
         tr_result = tr_compile.findall(table_result[0])
@@ -139,8 +152,33 @@ def getAll(html, race_id):
 
     bodys = []
 
+    top_time = None
+
     for v in tr_result:
         # tdを取得
+        td_result = None
+        order = None
+        number = None
+        name_id = None
+        name = None
+        gender = None
+        age = None
+        loaf = None
+        jockey_id = None
+        jockey = None
+        race_time = None
+        speed = None
+        passing = None
+        agari = None
+        odds = None
+        popular = None
+        weight = None
+        incdec = None
+        area = None
+        trainer = None
+        owner = None
+        prize = None
+
         try:
             td_result = td_compile.findall(v)
         except Exception as e:
@@ -252,8 +290,8 @@ def getAll(html, race_id):
         race_state,
         top_time,
         horses,
-        uren,
-        sanfuku
+        tan,
+        fuku
     ]])
 
     # body 書き込み
@@ -266,7 +304,7 @@ def main():
 
     temp = pathlib.Path(path)
 
-    files = list(temp.glob("*/*.txt"))
+    files = list(temp.glob("*.txt"))
 
     makeCsv(head_csv, [[
         "race_id",
@@ -312,6 +350,9 @@ def main():
     ]])
 
     all = len(files)
+
+    # print(files[0])
+    # files = [r"C:\Users\user\Documents\keiba_data_file\race_file\2012\201201010505.txt"]
 
     i = 1
 
