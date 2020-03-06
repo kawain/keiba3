@@ -39,7 +39,7 @@ class MyClass:
 def select_is_null():
     db = sqlite3.connect(db_file)
     cur = db.cursor()
-    cur.execute("SELECT my_id FROM family WHERE dad_id IS NULL;")
+    cur.execute("SELECT my_id FROM data WHERE dad_id IS NULL;")
     my_id = cur.fetchall()
     db.close()
 
@@ -75,6 +75,11 @@ def get_element(html):
         dad_id, dad = a_compile.findall(td_result[0])[0]
         dad = dad.replace("\n", "").split("<br />")[0]
 
+    except Exception as e:
+        print("\n get_element", id, e)
+        return MyClass()
+
+    try:
         # 母
         td_result = td_compile.findall(tr_result[16])
         mom_id, mom = a_compile.findall(td_result[0])[0]
@@ -84,8 +89,12 @@ def get_element(html):
         grandpa_id, grandpa = a_compile.findall(td_result[1])[0]
         grandpa = grandpa.replace("\n", "").split("<br />")[0]
     except Exception as e:
+        mom_id = None
+        mom = None
+        grandpa_id = None
+        grandpa = None
         print("\n get_element", id, e)
-        return MyClass()
+        pass
 
     return MyClass(dad_id, dad, mom_id, mom, grandpa_id, grandpa)
 
@@ -94,7 +103,7 @@ def update_db(id, obj):
     db = sqlite3.connect(db_file)
     cur = db.cursor()
 
-    qry = "update family set dad_id=?, dad=?, mom_id=?, mom=?, grandpa_id=?, grandpa=? where my_id=?;"
+    qry = "update data set dad_id=?, dad=?, mom_id=?, mom=?, grandpa_id=?, grandpa=? where my_id=?;"
     cur.execute(qry, (obj.dad_id, obj.dad, obj.mom_id,
                       obj.mom, obj.grandpa_id, obj.grandpa, id))
     db.commit()
@@ -111,7 +120,7 @@ def data_set():
     cur = db.cursor()
 
     cur.execute("""
-CREATE TABLE "family" (
+CREATE TABLE IF NOT EXISTS "data" (
     "id"	INTEGER,
     "my_id"	TEXT UNIQUE,
     "dad_id"	TEXT,
@@ -124,17 +133,23 @@ CREATE TABLE "family" (
 );
     """)
 
-    qry = "insert into family (id, my_id) values(?,?);"
+    qry = "insert into data (my_id) values(?);"
 
     all = len(ids)
     i = 1
     for v in ids:
-        cur.execute(qry, (i, str(v)))
+        try:
+            cur.execute(qry, (str(v),))
+            db.commit()
+        except Exception as e:
+            print(f"\r{i}/{all} {v} {e}", end="")
+            i += 1
+            continue
 
         print(f"\r{i}/{all} {v}", end="")
         i += 1
 
-    db.commit()
+    # db.commit()
     db.close()
 
     print("\n\n終了")
