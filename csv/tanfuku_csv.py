@@ -4,15 +4,15 @@ import re
 import csv
 import time
 
-# path = r"C:\Users\user\Documents\keiba_data_file\race_file"
-path = "./data_test"
-head_csv = "./tanfuku_head.csv"
-body_csv = "./tanfuku_body.csv"
+path = r"C:\Users\user\Documents\keiba_data_file\race_file"
+# path = "./data_test"
+head_csv = "./head.csv"
+body_csv = "./body.csv"
 
 # 正規表現コンパイル
 
-# date racecourse event_date
-pattern = r'class="smalltxt">(\d+?年\d+?月\d+?日)[\s\S]*?回([\s\S]+?)(\d+?)日[\s\S]*?<'
+# date racecourse event_date terms
+pattern = r'class="smalltxt">(\d+?年\d+?月\d+?日)[\s\S]*?回([\s\S]+?)(\d+?)日目 ([\s\S]*?)<'
 race_date_compile = re.compile(pattern)
 
 # race_number
@@ -41,6 +41,10 @@ td_compile = re.compile(pattern)
 
 # aのコンパイル urlの一部も取得
 pattern = r'<a[\s\S]*?href="/[\s\S]*?/(\d*?)/"[\s\S]*?>([\s\S]*?)</a'
+a_url_compile = re.compile(pattern)
+
+# aのコンパイル
+pattern = r'<a[\s\S]*?>([\s\S]*?)</a'
 a_compile = re.compile(pattern)
 
 # spanのコンパイル
@@ -54,10 +58,6 @@ trainer_compile = re.compile(pattern)
 # 馬体重のコンパイル
 pattern = r'([\d]*?)\(([\s\S]*?)\)'
 weight_compile = re.compile(pattern)
-
-# 馬主のコンパイル
-pattern = r'<a[\s\S]*?>([\s\S]*?)</a'
-owner_compile = re.compile(pattern)
 
 # 単勝のコンパイル もし<br />があってもそのまま取得　取得した後に調整
 pattern = r'class="pay_table_01"[\s\S]*?単勝[\s\S]*?<td>[\s\S]*?</td>[\s\S]*?<td class="txt_r">([\s\S]*?)</td>'
@@ -89,9 +89,11 @@ def getAll(html, race_id):
     race_date = None
     race_course = None
     event_date = None
+    terms = None
     try:
         result = race_date_compile.findall(html)
-        race_date, race_course, event_date = result[0]
+        race_date, race_course, event_date, terms = result[0]
+        terms = terms.replace("&nbsp;", " ")
     except Exception as e:
         print("\n race_date_compile", race_id, e)
 
@@ -164,7 +166,6 @@ def getAll(html, race_id):
         gender = None
         age = None
         loaf = None
-        jockey_id = None
         jockey = None
         race_time = None
         speed = None
@@ -196,7 +197,7 @@ def getAll(html, race_id):
                 number = td_result[2]
 
                 # 馬名
-                name_id, name = a_compile.findall(td_result[3])[0]
+                name_id, name = a_url_compile.findall(td_result[3])[0]
 
                 # 性別・年齢
                 gender = td_result[4][0]
@@ -206,7 +207,7 @@ def getAll(html, race_id):
                 loaf = td_result[5]
 
                 # 騎手
-                jockey_id, jockey = a_compile.findall(td_result[6])[0]
+                jockey = a_compile.findall(td_result[6])[0]
 
                 # タイム
                 race_time = td_result[7]
@@ -237,7 +238,7 @@ def getAll(html, race_id):
                 area, trainer = trainer_compile.findall(td_result[18])[0]
 
                 # 馬主
-                owner = owner_compile.findall(td_result[19])[0]
+                owner = a_compile.findall(td_result[19])[0]
                 if owner == "":
                     owner = td_result[19]
 
@@ -260,7 +261,6 @@ def getAll(html, race_id):
                 gender,
                 age,
                 loaf,
-                jockey_id,
                 jockey,
                 race_time,
                 speed,
@@ -284,6 +284,7 @@ def getAll(html, race_id):
         race_name,
         race_course,
         event_date,
+        terms,
         race_type,
         race_distance,
         race_weather,
@@ -304,7 +305,7 @@ def main():
 
     temp = pathlib.Path(path)
 
-    files = list(temp.glob("*.txt"))
+    files = list(temp.glob("*/*.txt"))
 
     makeCsv(head_csv, [[
         "race_id",
@@ -313,6 +314,7 @@ def main():
         "race_name",
         "race_course",
         "event_date",
+        "terms",
         "race_type",
         "race_distance",
         "race_weather",
@@ -333,7 +335,6 @@ def main():
         "gender",
         "age",
         "loaf",
-        "jockey_id",
         "jockey",
         "race_time",
         "speed",
